@@ -19,7 +19,7 @@ cities = {
     "Beni":        (160, 215),
     "Damauli":     (255, 210),
     "Tulsipur":    (140, 245),
-    "Dang": (175, 255),
+    "Dang":        (175, 255),
 
     # Eastern
     "Biratnagar":  (590, 210),
