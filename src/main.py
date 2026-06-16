@@ -40,28 +40,36 @@ def draw_graph(path=[]):
         middle_nodes    = []
         other_nodes     = list(cities.keys())
 
-    # --- Draw ---
+    # --- Draw edges ---
     nx.draw_networkx_edges(G, pos, edgelist=normal_edges,
         edge_color="#AAAAAA", width=1.2)
 
     nx.draw_networkx_edges(G, pos, edgelist=path_edges,
         edge_color="#1D9E75", width=3.5)
 
+    # --- Draw nodes (bigger size) ---
     nx.draw_networkx_nodes(G, pos, nodelist=other_nodes,
-        node_color="#888780", node_size=350)
+        node_color="#888780", node_size=600)
 
     nx.draw_networkx_nodes(G, pos, nodelist=middle_nodes,
-        node_color="#378ADD", node_size=400)
+        node_color="#378ADD", node_size=650)
 
     nx.draw_networkx_nodes(G, pos, nodelist=start_end_nodes,
-        node_color="#E85D24", node_size=500)
+        node_color="#E85D24", node_size=700)
 
-    nx.draw_networkx_labels(G, pos,
-        font_size=7, font_color="white", font_weight="bold")
+    # --- Labels ABOVE the node instead of inside ---
+    label_pos = {city: (x, y + 8) for city, (x, y) in pos.items()}
+    nx.draw_networkx_labels(G, label_pos,
+        font_size=7,
+        font_color="black",
+        font_weight="bold")
 
+    # --- Edge distance labels ---
     edge_labels = {(a, b): f"{d}km" for (a, b, d) in roads}
     nx.draw_networkx_edge_labels(G, pos,
-        edge_labels=edge_labels, font_size=6, font_color="#555555")
+        edge_labels=edge_labels,
+        font_size=6,
+        font_color="#555555")
 
 
 def main():
