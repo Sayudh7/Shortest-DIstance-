@@ -13,7 +13,13 @@ def draw_graph(path=[]):
         G.add_edge(city_a, city_b, weight=distance)
 
     # Negate y so the map feels geographically natural (north = up)
-    pos = {city: (cities[city][0], -cities[city][1]) for city in cities}
+    pos = {}
+
+    for city in cities:
+        x = cities[city][0]
+        y = cities[city][1]
+
+        pos[city] = (x, -y)
 
     # --- Categorize edges ---
     path_edges = []
