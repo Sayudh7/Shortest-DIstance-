@@ -1,38 +1,41 @@
+import math
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import matplotlib.lines as mlines
 import networkx as nx
+import contextily as ctx
 from graph import cities, roads
 from dijkstra import build_graph, dijkstra
 
-# --- Global state ---
-graph    = build_graph(cities, roads)
-G        = nx.Graph()
-selected = []  # stores [source, destination] as user clicks
 
-# Build networkx graph
+def lon_lat_to_mercator(lon, lat):
+    """Convert GPS coordinates to Web Mercator (EPSG:3857) for map display."""
+    x = lon * 20037508.34 / 180
+    y = math.log(math.tan((90 + lat) * math.pi / 360)) / (math.pi / 180)
+    y = y * 20037508.34 / 180
+    return x, y
+
+
+# --- Convert all city GPS coords to mercator for plotting ---
+pos = {city: lon_lat_to_mercator(*cities[city]) for city in cities}
+
+# --- Build graph ---
+graph = build_graph(cities, roads)
+G = nx.Graph()
 for city in cities:
     G.add_node(city)
 for (city_a, city_b, distance) in roads:
     G.add_edge(city_a, city_b, weight=distance)
 
-# Negate y so north is up
-pos = {city: (cities[city][0], -cities[city][1]) for city in cities}
-
-
-def get_clicked_city(x, y):
-    """Find which city node the user clicked on."""
-    for city, (cx, cy) in pos.items():
-        # If click is within 15 units of a node center — count it as a click
-        if abs(cx - x) < 15 and abs(cy - y) < 15:
-            return city
-    return None
+# --- Global state ---
+selected        = []
+distance_result = [0]
+current_path    = [[]]
 
 
 def draw(path=[], source=None, destination=None):
-    """Redraw the entire map."""
-    plt.clf()  # clear previous drawing
+    plt.clf()
     ax = plt.gca()
-    ax.set_facecolor("#F8F6F0")
-    plt.gcf().set_facecolor("#F8F6F0")
 
     # --- Categorize edges ---
     path_edges   = []
@@ -54,7 +57,6 @@ def draw(path=[], source=None, destination=None):
         middle_nodes    = [c for c in path if c not in start_end_nodes]
         other_nodes     = [c for c in cities if c not in path]
     elif source:
-        # Only source selected so far
         start_end_nodes = [source]
         middle_nodes    = []
         other_nodes     = [c for c in cities if c != source]
@@ -65,103 +67,128 @@ def draw(path=[], source=None, destination=None):
 
     # --- Draw edges ---
     nx.draw_networkx_edges(G, pos, edgelist=normal_edges,
-        edge_color="#CCCCCC", width=1.2, ax=ax)
+        edge_color="#FFFFFF", width=1.5, alpha=0.6, ax=ax)
 
     nx.draw_networkx_edges(G, pos, edgelist=path_edges,
-        edge_color="#1D9E75", width=4.0, ax=ax)
+        edge_color="#00FF88", width=5.0, alpha=0.9, ax=ax)
 
     # --- Draw nodes ---
     nx.draw_networkx_nodes(G, pos, nodelist=other_nodes,
-        node_color="#888780", node_size=600, ax=ax)
+        node_color="#3A3A3A", node_size=500,
+        edgecolors="white", linewidths=1.2, ax=ax)
 
     nx.draw_networkx_nodes(G, pos, nodelist=middle_nodes,
-        node_color="#378ADD", node_size=650, ax=ax)
+        node_color="#378ADD", node_size=600,
+        edgecolors="white", linewidths=1.5, ax=ax)
 
     nx.draw_networkx_nodes(G, pos, nodelist=start_end_nodes,
-        node_color="#E85D24", node_size=700, ax=ax)
+        node_color="#E85D24", node_size=700,
+        edgecolors="white", linewidths=2.0, ax=ax)
 
-    # --- Labels above nodes ---
-    label_pos = {city: (x, y + 8) for city, (x, y) in pos.items()}
+    # --- City name labels ---
+    label_pos = {city: (x, y + 18000) for city, (x, y) in pos.items()}
     nx.draw_networkx_labels(G, label_pos,
-        font_size=7, font_color="black", font_weight="bold", ax=ax)
+        font_size=7, font_color="white", font_weight="bold", ax=ax)
 
     # --- Edge distance labels ---
     edge_labels = {(a, b): f"{d}km" for (a, b, d) in roads}
     nx.draw_networkx_edge_labels(G, pos,
-        edge_labels=edge_labels, font_size=6, font_color="#777777", ax=ax)
+        edge_labels=edge_labels,
+        font_size=5.5,
+        font_color="yellow",
+        bbox=dict(boxstyle="round,pad=0.15", fc="black", alpha=0.3),
+        ax=ax)
 
-    # --- Title / instruction ---
+    # --- Real Nepal map background ---
+    try:
+        ctx.add_basemap(ax,
+            crs="EPSG:3857",
+            source=ctx.providers.CartoDB.DarkMatter,
+            zoom=7)
+    except Exception:
+        ax.set_facecolor("#1A1A2E")
+
+    # --- Title ---
     if not source:
-        plt.title("🗺  Click a city to select SOURCE", fontsize=13, pad=15)
+        plt.title("🗺  Nepal Shortest Path Finder  |  Click a city to select SOURCE",
+            fontsize=12, pad=12, color="white",
+            bbox=dict(facecolor="#1A1A2E", alpha=0.8, edgecolor="none"))
 
     elif source and not destination:
         plt.title(f"✅ Source: {source}  |  Now click DESTINATION city",
-            fontsize=13, pad=15)
+            fontsize=12, pad=12, color="white",
+            bbox=dict(facecolor="#1A1A2E", alpha=0.8, edgecolor="none"))
 
     elif source and destination and path:
         plt.title(
-            f"Shortest Path: {source} → {destination}  |  {distance_result[0]} km  |  "
+            f"📍 {source} → {destination}  |  "
+            f"Shortest Distance: {distance_result[0]} km  |  "
             f"Route: {' → '.join(path)}",
-            fontsize=11, pad=15)
+            fontsize=10, pad=12, color="white",
+            bbox=dict(facecolor="#1A1A2E", alpha=0.8, edgecolor="none"))
 
     # --- Legend ---
     legend_elements = [
-        plt.Line2D([0],[0], color="#1D9E75", linewidth=3,   label="Shortest path"),
-        plt.Line2D([0],[0], color="#CCCCCC", linewidth=1.5, label="Road"),
-        plt.scatter([],[], color="#E85D24", s=80, label="Source / Destination"),
-        plt.scatter([],[], color="#378ADD", s=80, label="City on path"),
-        plt.scatter([],[], color="#888780", s=80, label="Other city"),
+        mlines.Line2D([],[], color="#00FF88", linewidth=3,            label="Shortest path"),
+        mlines.Line2D([],[], color="white",   linewidth=1.5, alpha=0.6, label="Road"),
+        mpatches.Patch(color="#E85D24", label="Source / Destination"),
+        mpatches.Patch(color="#378ADD", label="City on path"),
+        mpatches.Patch(color="#3A3A3A", label="Other city"),
     ]
-    ax.legend(handles=legend_elements, loc="lower left", fontsize=8,
-        framealpha=0.8, facecolor="white")
+    ax.legend(handles=legend_elements, loc="lower left",
+        fontsize=8, framealpha=0.8,
+        facecolor="#1A1A2E", labelcolor="white",
+        edgecolor="none")
 
     plt.axis("off")
     plt.tight_layout()
     plt.draw()
 
 
-distance_result = [0]  # mutable container to share distance between functions
+def get_clicked_city(x, y):
+    """Find which city node the user clicked on."""
+    threshold = 25000  # ~25km radius in mercator units
+    for city, (cx, cy) in pos.items():
+        if abs(cx - x) < threshold and abs(cy - y) < threshold:
+            return city
+    return None
 
 
 def on_click(event):
-    """Handle mouse click on the map."""
     if event.xdata is None or event.ydata is None:
-        return  # clicked outside the graph area
+        return
 
     city = get_clicked_city(event.xdata, event.ydata)
     if not city:
-        return  # clicked on empty space
+        return
 
     if len(selected) == 0:
-        # First click — select source
         selected.append(city)
-        print(f"✅ Source selected: {city}")
+        print(f"✅ Source: {city}")
         draw(source=city)
 
     elif len(selected) == 1:
         if city == selected[0]:
-            print("⚠️  Please click a different city for destination.")
+            print("⚠️  Pick a different city for destination.")
             return
-        # Second click — select destination and run Dijkstra
         selected.append(city)
         source      = selected[0]
         destination = selected[1]
-        print(f"✅ Destination selected: {destination}")
-        print(f"🔍 Finding shortest path...")
 
         dist, path = dijkstra(graph, source, destination)
         distance_result[0] = dist
+        current_path[0]    = path
 
         if not path:
-            print(f"❌ No path found between {source} and {destination}")
+            print(f"❌ No path found between {source} and {destination}.")
             return
 
-        print(f"✅ Shortest distance : {dist} km")
-        print(f"📍 Path              : {' → '.join(path)}")
+        print(f"✅ {source} → {destination} : {dist} km")
+        print(f"📍 {' → '.join(path)}")
         draw(path=path, source=source, destination=destination)
 
     elif len(selected) == 2:
-        # Third click — reset and start over
+        # Reset and start fresh with new source
         selected.clear()
         selected.append(city)
         print(f"\n🔄 Reset! New source: {city}")
@@ -170,12 +197,13 @@ def on_click(event):
 
 def main():
     fig = plt.figure(figsize=(15, 9))
+    fig.patch.set_facecolor("#1A1A2E")
     fig.canvas.mpl_connect('button_press_event', on_click)
 
     print("\n=== Nepal Shortest Path Finder ===")
-    print("👆 Click any city on the map to select SOURCE")
-    print("👆 Click another city to select DESTINATION")
-    print("👆 Click again anywhere to reset\n")
+    print("👆 Click a city → SOURCE")
+    print("👆 Click another → DESTINATION")
+    print("👆 Click again → RESET\n")
 
     draw()
     plt.show()

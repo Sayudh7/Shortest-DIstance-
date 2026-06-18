@@ -1,44 +1,42 @@
 # Nepal cities graph
-# (x, y) = approximate screen position for visualization
-# x goes left to right (west to east)
-# y goes top to bottom (north to south)
+# Each city: (longitude, latitude) — real GPS coordinates
 
 cities = {
     # Central
-    "Kathmandu":   (370, 170),
-    "Hetauda":     (390, 245),
-    "Bharatpur":   (305, 255),
+    "Kathmandu":     (85.3240, 27.7172),
+    "Hetauda":       (85.0333, 27.4167),
+    "Bharatpur":     (84.4333, 27.6833),
 
     # Western
-    "Pokhara":     (200, 195),
-    "Butwal":      (245, 275),
-    "Nepalgunj":   (145, 260),
-    "Dhangadhi":   (80,  240),
-    "Bhairahawa":  (230, 290),
-    "Baglung":     (175, 200),
-    "Beni":        (160, 215),
-    "Damauli":     (255, 210),
-    "Tulsipur":    (140, 245),
-    "Dang":        (175, 255),
+    "Pokhara":       (83.9856, 28.2096),
+    "Butwal":        (83.4487, 27.6966),
+    "Nepalgunj":     (81.6159, 28.0503),
+    "Dhangadhi":     (80.5833, 28.6833),
+    "Bhairahawa":    (83.4548, 27.5057),
+    "Baglung":       (83.5833, 28.2667),
+    "Beni":          (83.5167, 28.3500),
+    "Damauli":       (84.2833, 27.9667),
+    "Tulsipur":      (82.2833, 28.1167),
+    "Dang":          (82.3000, 27.8500),
 
     # Eastern
-    "Biratnagar":  (590, 210),
-    "Janakpur":    (480, 255),
-    "Dharan":      (560, 190),
-    "Itahari":     (575, 200),
-    "Ilam":        (625, 170),
-    "Birtamod":    (610, 195),
-    "Damak":       (600, 200),
+    "Biratnagar":    (87.2800, 26.4525),
+    "Janakpur":      (85.9240, 26.7288),
+    "Dharan":        (87.2833, 26.8167),
+    "Itahari":       (87.2667, 26.6667),
+    "Ilam":          (87.9167, 26.9167),
+    "Birtamod":      (87.7667, 26.6500),
+    "Damak":         (87.6833, 26.6667),
 
     # Southern (Terai)
-    "Birgunj":     (355, 290),
-    "Simara":      (365, 275),
-    "Narayanghat": (300, 265),
-    "Gaur":        (430, 285),
+    "Birgunj":       (84.8744, 27.0104),
+    "Simara":        (84.9800, 27.1600),
+    "Narayanghat":   (84.4333, 27.7000),
+    "Gaur":          (85.2833, 26.7667),
 
     # Far West
-    "Mahendranagar": (55, 250),
-    "Tikapur":       (100, 255),
+    "Mahendranagar": (80.1833, 28.9667),
+    "Tikapur":       (81.1167, 28.5167),
 }
 
 roads = [
@@ -56,11 +54,11 @@ roads = [
     ("Hetauda",     "Birgunj",       55),
     ("Hetauda",     "Janakpur",     150),
     ("Hetauda",     "Narayanghat",  100),
+    ("Bharatpur",   "Narayanghat",   10),
     ("Bharatpur",   "Birgunj",       75),
     ("Simara",      "Birgunj",       25),
     ("Simara",      "Gaur",          80),
     ("Narayanghat", "Butwal",        95),
-    ("Narayanghat", "Bharatpur",     10),
 
     # --- Western ---
     ("Pokhara",     "Butwal",        95),
@@ -82,7 +80,7 @@ roads = [
     ("Dang",        "Butwal",       120),
     ("Dang",        "Tulsipur",      75),
     ("Dang",        "Bhairahawa",   130),
-    ("Dang",        "Pokhara",      210),   
+    ("Dang",        "Pokhara",      210),
 
     # --- Eastern ---
     ("Janakpur",    "Gaur",         110),
